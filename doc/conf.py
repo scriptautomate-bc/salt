@@ -95,44 +95,12 @@ build_type = os.environ.get(
 )  # latest, previous, master, next
 # < --- END do not merge these settings to other branches END ---> #
 
-# Set google custom search engine
-
-if build_type == repo_primary_branch:
-    release = latest_release
-    search_cx = "011515552685726825874:v1had6i279q"  # master
-    # search_cx = '011515552685726825874:x17j5zl74g8' # develop
-elif build_type == "next":
+if build_type == "next":
     release = next_release
-    search_cx = "011515552685726825874:ht0p8miksrm"  # latest
 elif build_type == "previous":
     release = previous_release
-    if release.startswith("3006"):
-        search_cx = "2e4374de8af93a7b1"  # 3006
-    elif release.startswith("3005"):
-        search_cx = "57b1006b37edd9e79"  # 3005
-    elif release.startswith("3004"):
-        search_cx = "23cd7068705804111"  # 3004
-    elif release.startswith("3003"):
-        search_cx = "a70a1a73eef62aecd"  # 3003
-    elif release.startswith("3002"):
-        search_cx = "5026f4f2af0bdbe2d"  # 3002
-    elif release.startswith("3001"):
-        search_cx = "f0e4f298fa32b8a5e"  # 3001
-    elif release.startswith("3000"):
-        search_cx = "011515552685726825874:3skhaozjtyn"  # 3000
-    elif release.startswith("2019.2"):
-        search_cx = "011515552685726825874:huvjhlpptnm"  # 2019.2
-    elif release.startswith("2018.3"):
-        search_cx = "011515552685726825874:vadptdpvyyu"  # 2018.3
-    elif release.startswith("2017.7"):
-        search_cx = "011515552685726825874:w-hxmnbcpou"  # 2017.7
-    elif release.startswith("2016.11"):
-        search_cx = "011515552685726825874:dlsj745pvhq"  # 2016.11
-    else:
-        search_cx = "011515552685726825874:ht0p8miksrm"  # latest
-else:  # latest or something else
+else:  # repo_primary_branch, "latest", or anything else
     release = latest_release
-    search_cx = "011515552685726825874:ht0p8miksrm"  # latest
 
 needs_sphinx = "1.3"
 
@@ -143,7 +111,7 @@ locale_dirs = [
     "_locale",
 ]
 
-master_doc = "contents"
+master_doc = "index"
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "_incl/*", "ref/cli/_includes/*.rst"]
 
@@ -158,6 +126,7 @@ extensions = [
     "sphinxcontrib.httpdomain",
     "saltrepo",
     "myst_parser",
+    "sphinx_design",
     #'saltautodoc', # Must be AFTER autodoc
 ]
 
@@ -263,64 +232,91 @@ gettext_compact = False
 
 
 ### HTML options
-# set 'HTML_THEME=saltstack' to use previous theme
-html_theme = os.environ.get("HTML_THEME", "saltstack2")
-html_theme_path = ["_themes"]
+html_theme = "pydata_sphinx_theme"
 html_title = ""
 html_short_title = "Salt"
 
 html_static_path = ["_static"]
-html_logo = None  # specified in the theme layout.html
+html_logo = "_static/salt-logo-full.svg"
 html_favicon = "favicon.ico"
 smartquotes = False
 
-# Use Google customized search or use Sphinx built-in JavaScript search
-if on_saltstack:
-    html_search_template = "googlesearch.html"
+# Map the current build to a `version_match` value the version-switcher JSON
+# at https://docs.saltproject.io/en/master/_static/switcher.json understands.
+# - master/development builds   -> "master"
+# - tagged release builds       -> the major version series ("3006", "3007", ...)
+if build_type == repo_primary_branch:
+    switcher_version = "master"
 else:
-    html_search_template = "searchbox.html"
+    switcher_version = major_version
 
-html_additional_pages = {
-    "404": "404.html",
+html_theme_options = {
+    "logo": {
+        "alt_text": "Salt Project Documentation",
+    },
+    "switcher": {
+        "json_url": "https://docs.saltproject.io/en/master/_static/switcher.json",
+        "version_match": switcher_version,
+    },
+    "check_switcher": False,
+    # Avoid PyData's link-shortening transform: it calls urlparse() on refuris and
+    # crashes on literal patterns like ``http://hostname[:port]`` in docstrings.
+    "shorten_urls": False,
+    "navbar_start": ["navbar-logo", "version-switcher"],
+    "navbar_center": ["navbar-nav"],
+    "navbar_end": ["theme-switcher", "navbar-icon-links"],
+    "navbar_persistent": ["search-button"],
+    "external_links": [
+        {"name": "Install Guide", "url": "https://docs.saltproject.io/salt/install-guide/en/latest/"},
+        {"name": "User Guide", "url": "https://docs.saltproject.io/salt/user-guide/en/latest/"},
+        {"name": "Downloads", "url": "https://packages.broadcom.com/artifactory/saltproject-generic/"},
+        {"name": "Develop", "url": "https://docs.saltproject.io/en/master/topics/development/"},
+    ],
+    "icon_links": [
+        {
+            "name": "GitHub",
+            "url": "https://github.com/saltstack/salt",
+            "icon": "fa-brands fa-github",
+        },
+        {
+            "name": "Discord",
+            "url": "https://discord.com/invite/J7b7EscrAs",
+            "icon": "fa-brands fa-discord",
+        },
+        {
+            "name": "Salt Project",
+            "url": "https://saltproject.io/",
+            "icon": "fa-solid fa-globe",
+        },
+    ],
+    "show_version_warning_banner": True,
+    "use_edit_page_button": True,
+    "footer_start": ["copyright", "last-updated"],
+    "footer_end": ["sphinx-version"],
 }
 
-html_default_sidebars = [
-    html_search_template,
-    "version.html",
-    "localtoc.html",
-    "relations.html",
-    "sourcelink.html",
-    "saltstack.html",
-]
+# Sidebars: rely on the PyData defaults everywhere except the landing page
+# (no meaningful TOC to show) and module reference pages, where we still
+# want the in-page module function index produced by modules-sidebar.html.
 html_sidebars = {
+    "index": [],
     "ref/**/all/salt.*": [
-        html_search_template,
-        "version.html",
+        "sidebar-nav-bs",
         "modules-sidebar.html",
-        "localtoc.html",
-        "relations.html",
-        "sourcelink.html",
-        "saltstack.html",
     ],
     "ref/formula/all/*": [],
 }
 
 html_context = {
-    "on_saltstack": on_saltstack,
-    "html_default_sidebars": html_default_sidebars,
-    "github_base": "https://github.com/saltstack/salt",
-    "github_issues": "https://github.com/saltstack/salt/issues",
-    "github_downloads": "https://github.com/saltstack/salt/downloads",
-    "latest_release": latest_release,
-    "previous_release": previous_release,
-    "previous_release_dir": previous_release_dir,
-    "next_release": next_release,
-    "next_release_dir": next_release_dir,
-    "search_cx": search_cx,
-    "build_type": build_type,
-    "today": today,
-    "copyright": copyright,
+    "github_user": "saltstack",
+    "github_repo": "salt",
+    "github_version": repo_primary_branch,
+    "doc_path": "doc",
     "repo_primary_branch": repo_primary_branch,
+}
+
+html_additional_pages = {
+    "404": "404.html",
 }
 
 html_use_index = True
@@ -332,7 +328,7 @@ html_show_copyright = True
 ### Latex options
 
 latex_documents = [
-    ("contents", "Salt.tex", "Salt Documentation", "VMware, Inc.", "manual"),
+    ("reference", "Salt.tex", "Salt Documentation", "VMware, Inc.", "manual"),
 ]
 
 latex_logo = "_static/salt-logo.png"

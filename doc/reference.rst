@@ -1,7 +1,7 @@
 .. _table-of-contents:
 
 ======================
-Salt Table of Contents
+Salt Reference
 ======================
 
 .. toctree::

@@ -1,0 +1,23 @@
+[
+  {
+    "name": "master",
+    "version": "master",
+    "url": "https://docs.saltproject.io/en/master/"
+  },
+  {
+    "name": "3008 (LTS)",
+    "version": "3008",
+    "url": "https://docs.saltproject.io/en/3008/",
+    "preferred": true
+  },
+  {
+    "name": "3007 (STS)",
+    "version": "3007",
+    "url": "https://docs.saltproject.io/en/3007/"
+  },
+  {
+    "name": "3006 (LTS)",
+    "version": "3006",
+    "url": "https://docs.saltproject.io/en/3006/"
+  }
+]
